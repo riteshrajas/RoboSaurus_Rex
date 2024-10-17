@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.Subsystems;
+import frc.robot.subsystems.elevator.ElevatorSubsystem;
 import frc.robot.subsystems.swerve.SwerveSubsystem;
 
 
@@ -26,6 +27,7 @@ public class RobotContainer
     {
         // Configure the trigger bindings
         SwerveSubsystem swerveSubsystem = new SwerveSubsystem(Subsystems.SWERVE_DRIVE, Subsystems.SWERVE_DRIVE.getNetworkTable(), RobotMap.SensorMap.GYRO_PORT, driverController);
+        ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem(Subsystems.ELEVATOR, Subsystems.ELEVATOR.getNetworkTable());
         configureBindings();
         swerveSubsystem.setDefaultCommand();
     }

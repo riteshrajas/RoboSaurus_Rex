@@ -11,7 +11,8 @@ public enum Subsystems {
     PNEUMATICS("Pneumatics", "This Subsystem is responsible for controlling the Pneumatics"),
     TURRET("Turret", "This Subsystem is responsible for controlling the Turret"),
     VISION("Vision", "This Subsystem is responsible for controlling the Vision"),
-    WHEEL_OF_FORTUNE("Wheel of Fortune", "This Subsystem is responsible for controlling the Wheel of Fortune");
+    WHEEL_OF_FORTUNE("Wheel of Fortune", "This Subsystem is responsible for controlling the Wheel of Fortune"),
+    ELEVATOR( "Elevator", "This Subsystem is responsible for controlling the Elevator");
 
     private final String ntName;
     private final String description;

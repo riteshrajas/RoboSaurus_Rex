@@ -3,6 +3,7 @@ package frc.robot.subsystems.swerve;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -13,6 +14,8 @@ import frc.robot.constants.SwerveConstants;
 import frc.robot.subsystems.SubsystemABS;
 import frc.robot.subsystems.Subsystems;
 import frc.robot.subsystems.swerve.generated.TunerConstants;
+
+import java.util.Map;
 
 public class SwerveSubsystem extends SubsystemABS {
     public final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
@@ -27,16 +30,13 @@ public class SwerveSubsystem extends SubsystemABS {
 
     private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
     private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
-    private final ShuffleboardTab tab;
+    private ShuffleboardTab tab;
+    private String tabName;
     private final Pigeon2 pigeonIMU;
     private CommandXboxController driverController;
-    private double i = 1.0;
 
-    private String tabName;
-
-    public SwerveSubsystem(Subsystems part, String tabName, int pigeonIMUID, CommandXboxController driverController) {
-        super(part, tabName);
-        this.tab = Shuffleboard.getTab(tabName);
+    public SwerveSubsystem(Subsystems part , String tabName , int pigeonIMUID , CommandXboxController driverController) {
+        super(part , tabName);
         this.tabName = tabName;
         this.pigeonIMU = new Pigeon2(pigeonIMUID);  // Initialize Pigeon IMU
         this.driverController = driverController;
@@ -44,7 +44,7 @@ public class SwerveSubsystem extends SubsystemABS {
 
     @Override
     public void init() {
-        // Initialization logic
+        tab = getTab();
     }
 
     @Override
@@ -57,9 +57,47 @@ public class SwerveSubsystem extends SubsystemABS {
         // Simulation-specific periodic tasks
     }
 
+    public double applyDeadband(double value , double deadband) {
+        return Math.abs(value) > deadband ? value : 0;
+    }
+
+    public double getRobotAngle() {
+        return pigeonIMU.getAngle();
+    }
+
     @Override
     public void setDefaultCommand() {
         drivetrain.setDefaultCommand(new GenericDrivetrain(driverController));
+    }
+
+    public void setBetaDefaultCommand() {
+        drivetrain.setDefaultCommand(new FODC(driverController));
+    }
+
+    public void stop() {
+        drivetrain.setControl(brake);
+    }
+
+    public void printcontroller() {
+        tab.addNumber(tabName + "/Left Y" , () -> applyDeadband(driverController.getLeftY() , 0.10));
+        tab.addNumber(tabName + "/Left X" , () -> applyDeadband(driverController.getLeftX() , 0.10));
+        tab.addNumber(tabName + "/Right X" , () -> applyDeadband(driverController.getRightX() , 0.10));
+        tab.addNumber(tabName + "/Right Y" , () -> applyDeadband(driverController.getRightY() , 0.10));
+        tab.addNumber(tabName + "/Left Trigger" , () -> applyDeadband(driverController.getLeftTriggerAxis() , 0.10));
+        tab.addNumber(tabName + "/Right Trigger" , () -> applyDeadband(driverController.getRightTriggerAxis() , 0.10));
+        tab.addBoolean(tabName + "/Left Bumper" , driverController.leftBumper());
+        tab.addBoolean(tabName + "/Right Bumper" , driverController.rightBumper());
+        tab.addBoolean(tabName + "/A Button" , driverController.a());
+        tab.addBoolean(tabName + "/B Button" , driverController.b());
+        tab.addBoolean(tabName + "/X Button" , driverController.x());
+        tab.addBoolean(tabName + "/Y Button" , driverController.y());
+        tab.addBoolean(tabName + "/Start Button" , driverController.start());
+        tab.addBoolean(tabName + "/Back Button" , driverController.back());
+    }
+
+    public double snapToNearestLine(double angle , int i) {
+        double snapAngle = 360.0 / RobotMap.SafetyMap.FODC.LineCount;
+        return Math.round(angle / snapAngle) * snapAngle;
     }
 
     class GenericDrivetrain extends Command {
@@ -69,26 +107,80 @@ public class SwerveSubsystem extends SubsystemABS {
         public GenericDrivetrain(CommandXboxController driverController) {
             addRequirements(drivetrain);
             this.driverController = driverController;
-            tab.add(tabName + "/LeftX", i);
-            tab.add(tabName + "/LeftY", i);
-            tab.add(tabName + "/RightX", i);
-            tab.add(tabName + "/RightY", i);
+            printcontroller();
         }
 
         @Override
         public void execute() {
             super.execute();
-            i = (Math.random() * 2) - 1; // randomize the value of i from -1 to 1
+            // Apply Deadband to the controller inputs
+            double rightStickX = applyDeadband(driverController.getRightX() , 0.05);
+            double rightStickY = applyDeadband(driverController.getRightY() , 0.05);
+            double leftStickX = applyDeadband(driverController.getLeftX() , 0.05);
+
+
             new ParallelCommandGroup(
                     drivetrain.applyRequest(() -> drive
-                            .withVelocityX(-driverController.getLeftY() * RobotMap.SafetyMap.kMaxSpeed * SwerveConstants.MaxSpeed * RobotMap.SafetyMap.kMaxSpeedChange)
-                            .withVelocityY(driverController.getLeftX() * RobotMap.SafetyMap.kMaxSpeed * SwerveConstants.MaxSpeed * RobotMap.SafetyMap.kMaxSpeedChange)
-                            .withRotationalRate(driverController.getRightX() * SwerveConstants.MaxAngularRate))
+                            .withVelocityX(-rightStickY * RobotMap.SafetyMap.kMaxSpeed * SwerveConstants.MaxSpeed * RobotMap.SafetyMap.kMaxSpeedChange)
+                            .withVelocityY(-rightStickX * RobotMap.SafetyMap.kMaxSpeed * SwerveConstants.MaxSpeed * RobotMap.SafetyMap.kMaxSpeedChange)
+                            .withRotationalRate(leftStickX * SwerveConstants.MaxAngularRate))
             );
         }
     }
-
     class FODC extends Command {
+
+        private final CommandXboxController driverController;
+        private double angle;
+
+        public FODC(CommandXboxController driverController) {
+            addRequirements(drivetrain);
+            this.driverController = driverController;
+            printcontroller();
+            tab.addNumber("Angle", () -> angle)
+                    .withWidget(BuiltInWidgets.kGyro)
+                    .withPosition(0, 0)
+                    .withProperties(Map.of("majorTickSpacing", RobotMap.SafetyMap.FODC.LineCount , "startingAngle", 0));
+        }
+
+
+        @Override
+        public void execute() {
+            super.execute();
+            // Apply Deadband to the controller inputs
+            double rightStickX = applyDeadband(driverController.getRightX() , 0.05);
+            double rightStickY = applyDeadband(driverController.getRightY() , 0.05);
+            double leftStickX = applyDeadband(driverController.getLeftX() , 0.05);
+            double leftStickY = applyDeadband(driverController.getLeftY() , 0.05);
+            double robotAngle;
+            double snappedAngle;
+            double lastAngle = 0.0;
+
+            if ( rightStickX != 0 || rightStickY != 0 ) {
+                angle = Math.toDegrees(Math.atan2(rightStickY , rightStickX));
+            } else {
+                angle = lastAngle;
+            }
+            ;
+
+            snappedAngle = snapToNearestLine(angle , RobotMap.SafetyMap.FODC.LineCount);
+            robotAngle = getRobotAngle();
+            RobotMap.SafetyMap.FODC.AngleDiff = snappedAngle - robotAngle;
+
+            if ( RobotMap.SafetyMap.FODC.AngleDiff > 180 ) {
+                RobotMap.SafetyMap.FODC.AngleDiff -= 360;
+            } else if ( RobotMap.SafetyMap.FODC.AngleDiff < -180 ) {
+                RobotMap.SafetyMap.FODC.AngleDiff += 360;
+            }
+
+            double output = drivetrain.getPIDRotation(RobotMap.SafetyMap.FODC.AngleDiff);
+
+            drivetrain.setControl(drive
+                    .withVelocityX(-leftStickY * SwerveConstants.MaxSpeed)
+                    .withVelocityY(-leftStickX * SwerveConstants.MaxSpeed)
+                    .withRotationalRate(output));
+            double lastOutput = output;
+        }
+
 
     }
 }

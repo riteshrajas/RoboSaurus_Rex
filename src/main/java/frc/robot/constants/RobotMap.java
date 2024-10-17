@@ -11,7 +11,8 @@ public class RobotMap {
         public static final double kMaxSpeedChange = 0.5;
 
         public class FODC {
-            public static final double SnapAngle = 72; // Number of lines to snap the angle to
+            public static final int LineCount = 72;
+            public static double AngleDiff = 0.0;
         }
     }
 
@@ -31,6 +32,10 @@ public class RobotMap {
         public static final int FRONT_RIGHT_DRIVE = 5;
         public static final int BACK_LEFT_DRIVE = 6;
         public static final int BACK_RIGHT_DRIVE = 7;
+    }
+
+    public static class ElevatorMap {
+        public static final int ELEVATOR_MOTOR = 8;
     }
 
     // Additional motor controllers or sensors could be added here
