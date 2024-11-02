@@ -70,6 +70,11 @@ public class SwerveSubsystem extends SubsystemABS {
         drivetrain.setDefaultCommand(new GenericDrivetrain(driverController));
     }
 
+    @Override
+    public boolean isHealthy() {
+        return true;
+    }
+
     public void setBetaDefaultCommand() {
         drivetrain.setDefaultCommand(new FODC(driverController));
     }
@@ -127,48 +132,53 @@ public class SwerveSubsystem extends SubsystemABS {
             );
         }
     }
+
+
     class FODC extends Command {
 
         private final CommandXboxController driverController;
         private double angle;
+        private double lastAngle = 0.0;
+        private double snappedAngle;
 
         public FODC(CommandXboxController driverController) {
             addRequirements(drivetrain);
             this.driverController = driverController;
             printcontroller();
-            tab.addNumber("Angle", () -> angle)
+            tab.addNumber("Angle", () -> snappedAngle)
                     .withWidget(BuiltInWidgets.kGyro)
                     .withPosition(0, 0)
-                    .withProperties(Map.of("majorTickSpacing", RobotMap.SafetyMap.FODC.LineCount , "startingAngle", 0));
+                    .withProperties(Map.of("majorTickSpacing", RobotMap.SafetyMap.FODC.LineCount, "startingAngle", 0));
+            tab.addNumber("FODC/Angle", () -> angle)
+                    .withWidget(BuiltInWidgets.kGyro)
+                    .withPosition(0, 0)
+                    .withProperties(Map.of("majorTickSpacing", RobotMap.SafetyMap.FODC.LineCount, "startingAngle", 0));
         }
-
 
         @Override
         public void execute() {
             super.execute();
             // Apply Deadband to the controller inputs
-            double rightStickX = applyDeadband(driverController.getRightX() , 0.05);
-            double rightStickY = applyDeadband(driverController.getRightY() , 0.05);
-            double leftStickX = applyDeadband(driverController.getLeftX() , 0.05);
-            double leftStickY = applyDeadband(driverController.getLeftY() , 0.05);
+            double rightStickX = applyDeadband(driverController.getRightX(), 0.05);
+            double rightStickY = applyDeadband(driverController.getRightY(), 0.05);
+            double leftStickX = applyDeadband(driverController.getLeftX(), 0.05);
+            double leftStickY = applyDeadband(driverController.getLeftY(), 0.05);
             double robotAngle;
-            double snappedAngle;
-            double lastAngle = 0.0;
 
-            if ( rightStickX != 0 || rightStickY != 0 ) {
-                angle = Math.toDegrees(Math.atan2(rightStickY , rightStickX));
+            if (rightStickX != 0 || rightStickY != 0) {
+                angle = Math.toDegrees(Math.atan2(rightStickY, rightStickX)) - 90; // Adjust angle by subtracting 90 degrees
+                lastAngle = angle; // Update last angle when joystick is moved
             } else {
-                angle = lastAngle;
+                angle = lastAngle; // Use last angle when joystick is not moved
             }
-            ;
 
-            snappedAngle = snapToNearestLine(angle , RobotMap.SafetyMap.FODC.LineCount);
+            snappedAngle = snapToNearestLine(angle, RobotMap.SafetyMap.FODC.LineCount);
             robotAngle = getRobotAngle();
             RobotMap.SafetyMap.FODC.AngleDiff = snappedAngle - robotAngle;
 
-            if ( RobotMap.SafetyMap.FODC.AngleDiff > 180 ) {
+            if (RobotMap.SafetyMap.FODC.AngleDiff > 180) {
                 RobotMap.SafetyMap.FODC.AngleDiff -= 360;
-            } else if ( RobotMap.SafetyMap.FODC.AngleDiff < -180 ) {
+            } else if (RobotMap.SafetyMap.FODC.AngleDiff < -180) {
                 RobotMap.SafetyMap.FODC.AngleDiff += 360;
             }
 
@@ -178,9 +188,6 @@ public class SwerveSubsystem extends SubsystemABS {
                     .withVelocityX(-leftStickY * SwerveConstants.MaxSpeed)
                     .withVelocityY(-leftStickX * SwerveConstants.MaxSpeed)
                     .withRotationalRate(output));
-            double lastOutput = output;
         }
-
-
     }
 }

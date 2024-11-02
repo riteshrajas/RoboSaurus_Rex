@@ -12,7 +12,7 @@ public enum Subsystems {
     TURRET("Turret", "This Subsystem is responsible for controlling the Turret"),
     VISION("Vision", "This Subsystem is responsible for controlling the Vision"),
     WHEEL_OF_FORTUNE("Wheel of Fortune", "This Subsystem is responsible for controlling the Wheel of Fortune"),
-    ELEVATOR( "Elevator", "This Subsystem is responsible for controlling the Elevator");
+    ELEVATOR("Elevator", "This Subsystem is responsible for controlling the Elevator");
 
     private final String ntName;
     private final String description;
@@ -28,5 +28,21 @@ public enum Subsystems {
 
     public String getDescription() {
         return description;
+    }
+
+    public SubsystemABS getInstance() {
+        switch (this) {
+            case SWERVE_DRIVE:
+                return SWERVE_DRIVE.getInstance();
+            case ELEVATOR:
+                return ELEVATOR.getInstance();
+            case TURRET:
+                return TURRET.getInstance();
+            case VISION:
+                return VISION.getInstance();
+            // Add other subsystems as needed
+            default:
+                return null;
+        }
     }
 }

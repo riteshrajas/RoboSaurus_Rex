@@ -24,6 +24,7 @@ public class ElevatorSubsystem extends SubsystemABS {
         super(part, tabName);
     }
 
+
     @Override
     public void init() {
         tab = getTab();
@@ -71,5 +72,11 @@ public class ElevatorSubsystem extends SubsystemABS {
     @Override
     public void setDefaultCommand() {
         // Set the default command for the subsystem here
+    }
+
+    @Override
+    public boolean isHealthy() {
+        // Check if the elevator subsystem is healthy
+        return true;
     }
 }

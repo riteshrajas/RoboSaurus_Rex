@@ -4,14 +4,14 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public abstract class SubsystemABS extends SubsystemBase {
     private Subsystems part;
-    private static ShuffleboardTab tab;
-    protected static  NetworkTable ntTable;
-    protected  static String tabName;
+    private  ShuffleboardTab tab;
+    protected   NetworkTable ntTable;
+    protected   String tabName;
+    protected  Object instance;
 
     public SubsystemABS(Subsystems part, String tabName) {
         this.tabName = tabName;
@@ -23,6 +23,7 @@ public abstract class SubsystemABS extends SubsystemBase {
         };
         setupNetworkTables(part.toString());
         init();
+        instance = this;
 
 
     }
@@ -39,6 +40,10 @@ public abstract class SubsystemABS extends SubsystemBase {
         return tab;
     }
 
+    public  Object getInstance() {
+        return instance;
+    }
+
     public void setupNetworkTables(String part) {
         ntTable = NetworkTableInstance.getDefault().getTable(part);
     }
@@ -52,4 +57,6 @@ public abstract class SubsystemABS extends SubsystemBase {
     public abstract void simulationPeriodic();
 
     public abstract void setDefaultCommand();
+
+    public abstract  boolean isHealthy();
 }

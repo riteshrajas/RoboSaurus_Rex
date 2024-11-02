@@ -38,6 +38,14 @@ public class RobotMap {
         public static final int ELEVATOR_MOTOR = 8;
     }
 
+    public static class LauncherMap
+    {
+        public static final int LAUNCHER_MOTOR = 9;
+        public static final int TURRET_MOTOR = 10;
+        public static final int LAUNCHER_SOLENOID_FORWARD = 3;
+        public static final int LAUNCHER_SOLENOID_REVERSE = 4;
+    }
+
     // Additional motor controllers or sensors could be added here
     public static class SensorMap {
         // Example: Add sensor ports (like encoders, gyros, etc.)
