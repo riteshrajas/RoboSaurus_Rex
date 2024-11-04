@@ -40,4 +40,9 @@ public class Vision extends SubsystemABS {
     public boolean isHealthy() {
         return isVisionActive;
     }
+
+    @Override
+    public void Failsafe() {
+
+    }
 }

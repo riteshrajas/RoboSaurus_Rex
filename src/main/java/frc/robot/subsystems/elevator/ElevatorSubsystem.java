@@ -79,4 +79,9 @@ public class ElevatorSubsystem extends SubsystemABS {
         // Check if the elevator subsystem is healthy
         return true;
     }
+
+    @Override
+    public void Failsafe() {
+
+    }
 }

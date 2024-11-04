@@ -46,6 +46,7 @@ public class SafetyManager extends SubsystemBase {
             if (!subsystem.isHealthy()) {
                 System.out.println(subsystem.getName() + " is not healthy" + " at " + System.currentTimeMillis());
                 DriverStation.reportError(subsystem.getName() + " is not healthy", false);
+                subsystem.Failsafe();
             }
         }
     }

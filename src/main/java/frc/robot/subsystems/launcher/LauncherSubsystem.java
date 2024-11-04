@@ -71,6 +71,11 @@ public class LauncherSubsystem extends SubsystemABS {
         return true;
     }
 
+    @Override
+    public void Failsafe() {
+
+    }
+
     public Command seekTarget() {
         return null;
     }

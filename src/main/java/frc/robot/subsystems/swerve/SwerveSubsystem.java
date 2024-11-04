@@ -75,6 +75,11 @@ public class SwerveSubsystem extends SubsystemABS {
         return true;
     }
 
+    @Override
+    public void Failsafe() {
+
+    }
+
     public void setBetaDefaultCommand() {
         drivetrain.setDefaultCommand(new FODC(driverController));
     }

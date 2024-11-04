@@ -7,7 +7,9 @@ package frc.robot;
 
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.GamePadViberatorCommand;
 import frc.robot.constants.RobotMap;
 import frc.robot.subsystems.SubsystemABS;
 import frc.robot.subsystems.Subsystems;
@@ -17,8 +19,7 @@ import frc.robot.subsystems.swerve.SwerveSubsystem;
 import frc.robot.subsystems.vision.Vision;
 
 
-public class RobotContainer
-{
+public class RobotContainer {
 
     // Replace with CommandPS4Controller or CommandJoystick if needed
     private final CommandXboxController driverController = new CommandXboxController(RobotMap.UsbMap.DRIVER_CONTROLLER);
@@ -30,37 +31,54 @@ public class RobotContainer
     private final Vision visionSubsystem;
 
 
-    public RobotContainer()
-    {
+    public RobotContainer() {
         // Configure the trigger bindings
-        swerveSubsystem = new SwerveSubsystem(Subsystems.SWERVE_DRIVE, Subsystems.SWERVE_DRIVE.getNetworkTable(), RobotMap.SensorMap.GYRO_PORT, driverController);
-        elevatorSubsystem = new ElevatorSubsystem(Subsystems.ELEVATOR, Subsystems.ELEVATOR.getNetworkTable());
-        launcherSubsystem = new LauncherSubsystem(Subsystems.TURRET, Subsystems.TURRET.getNetworkTable());
-        visionSubsystem = new Vision(Subsystems.VISION, Subsystems.VISION.getNetworkTable());
+        swerveSubsystem = new SwerveSubsystem(
+                Subsystems.SWERVE_DRIVE ,
+                Subsystems.SWERVE_DRIVE.getNetworkTable() ,
+                RobotMap.SensorMap.GYRO_PORT ,
+                driverController
+        );
+        elevatorSubsystem = new ElevatorSubsystem(
+                Subsystems.ELEVATOR ,
+                Subsystems.ELEVATOR.getNetworkTable()
+        );
+        launcherSubsystem = new LauncherSubsystem(
+                Subsystems.TURRET ,
+                Subsystems.TURRET.getNetworkTable()
+        );
+        visionSubsystem = new Vision(
+                Subsystems.VISION ,
+                Subsystems.VISION.getNetworkTable()
+        );
+
+
+
         configureBindings();
-        swerveSubsystem.setDefaultCommand();
-//        swerveSubsystem.setBetaDefaultCommand();
-    }
-
-
-
-    private void configureBindings()
-    {
+        swerveSubsystem.setDefaultCommand(); /*       swerveSubsystem.setBetaDefaultCommand();    */
 
     }
 
 
-    public Command getAutonomousCommand()
-    {
-        // An example command will be run in autonomous
-        return null;
+    private void configureBindings() { }
+
+
+    public Command getAutonomousCommand() {return null; }
+
+
+//     DO NOT REMOVE
+    public SubsystemABS[] SafeGuardSystems() {
+        return new SubsystemABS[] {
+                swerveSubsystem ,
+                elevatorSubsystem ,
+                launcherSubsystem ,
+                visionSubsystem
+        };
     }
-
-
-// Do not modify the following method
-public SubsystemABS[] getSubsystems() {
-    return new SubsystemABS[]{swerveSubsystem, elevatorSubsystem, launcherSubsystem, visionSubsystem};
-}
-
-
+    public Object[] TestCommands() {
+        return new Object[] {
+                "Driver Controller Vibration" , new GamePadViberatorCommand(driverController.getHID()) ,
+                "Operator Controller Vibration" , new GamePadViberatorCommand(operatorController.getHID())
+        };
+    }
 }

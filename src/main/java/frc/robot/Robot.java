@@ -8,8 +8,11 @@ package frc.robot;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.utils.RobotTester;
 import frc.robot.utils.SafetyManager;
 
 /**
@@ -32,7 +35,7 @@ public class Robot extends TimedRobot
     {
 
         robotContainer = new RobotContainer();
-        new SafetyManager(robotContainer.getSubsystems());
+        new SafetyManager(robotContainer.SafeGuardSystems());
 
 
         // Start logging data log
@@ -110,16 +113,17 @@ public class Robot extends TimedRobot
     
     
     @Override
-    public void testInit()
-    {
+    public void testInit() {
         // Cancels all running commands at the start of test mode.
         CommandScheduler.getInstance().cancelAll();
+        RobotTester tester = new RobotTester(robotContainer.TestCommands());
     }
-    
     
     /** This method is called periodically during test mode. */
     @Override
-    public void testPeriodic() {}
+    public void testPeriodic() {
+
+    }
     
     
     /** This method is called once when the robot is first started up. */

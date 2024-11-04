@@ -59,4 +59,6 @@ public abstract class SubsystemABS extends SubsystemBase {
     public abstract void setDefaultCommand();
 
     public abstract  boolean isHealthy();
+
+    public abstract void Failsafe();
 }
