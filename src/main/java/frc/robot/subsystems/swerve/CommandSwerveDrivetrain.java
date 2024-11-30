@@ -124,7 +124,6 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     }
 
     public double getPIDRotation(double currentX) {
-        SmartDashboard.putNumber("PID Current", currentX);
         return pid.calculate(currentX);
     }
 

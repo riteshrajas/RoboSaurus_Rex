@@ -24,7 +24,7 @@ public class SafetyManager extends SubsystemBase {
 
     public static void init() {
         safetyTab = Shuffleboard.getTab("Safety");
-        
+
 
 
     }

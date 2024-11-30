@@ -3,9 +3,13 @@ package frc.robot.subsystems.swerve;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.shuffleboard.SimpleWidget;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -14,47 +18,73 @@ import frc.robot.constants.SwerveConstants;
 import frc.robot.subsystems.SubsystemABS;
 import frc.robot.subsystems.Subsystems;
 import frc.robot.subsystems.swerve.generated.TunerConstants;
+import frc.robot.utils.DrivetrainConstants;
+import frc.robot.utils.FieldMap;
 
 import java.util.Map;
 
 public class SwerveSubsystem extends SubsystemABS {
-    public final CommandSwerveDrivetrain drivetrain = TunerConstants.DriveTrain;
+    public final CommandSwerveDrivetrain drivetrain =  TunerConstants.DriveTrain;
+    public final SwerveRequest.FieldCentric drive = DrivetrainConstants.drive;
+    private final SwerveRequest.FieldCentricFacingAngle autoAim = DrivetrainConstants.autoAim;
+    public final SwerveRequest.SwerveDriveBrake brake = DrivetrainConstants.brake;
+    private final SwerveRequest.PointWheelsAt point = DrivetrainConstants.point;
 
-    private final SwerveRequest.FieldCentric drive = new SwerveRequest.FieldCentric()
-            .withDeadband(SwerveConstants.MaxSpeed * 0.1)
-            .withRotationalDeadband(SwerveConstants.MaxAngularRate * 0.1)
-            .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
-
-    private final SwerveRequest.FieldCentricFacingAngle autoAim = new SwerveRequest.FieldCentricFacingAngle()
-            .withDriveRequestType(SwerveModule.DriveRequestType.OpenLoopVoltage);
-
-    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
-    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
     private ShuffleboardTab tab;
-    private String tabName;
+    private final String tabName;
     private final Pigeon2 pigeonIMU;
-    private CommandXboxController driverController;
+    private final CommandXboxController driverController;
+    private double robotFacingAngle;
+    private SimpleWidget robotSpeedWidget;
+    private SimpleWidget robotGyroWidget;
+    private FieldMap fieldMap;
+    private SimpleWidget velocityGrid;
+
 
     public SwerveSubsystem(Subsystems part , String tabName , int pigeonIMUID , CommandXboxController driverController) {
         super(part , tabName);
         this.tabName = tabName;
         this.pigeonIMU = new Pigeon2(pigeonIMUID);  // Initialize Pigeon IMU
         this.driverController = driverController;
+        this.fieldMap = new FieldMap();
     }
 
     @Override
     public void init() {
         tab = getTab();
-    }
 
+        robotGyroWidget = tab.add("Gyro",  robotFacingAngle)
+                .withWidget(BuiltInWidgets.kGyro) // Use Gyro widget
+                .withProperties(Map.of("startingAngle", 0, "majorTickSpacing", 45)) // Customize properties
+                .withPosition(3, 0)
+                .withSize(3, 3);
+
+        robotSpeedWidget = tab.add("Robot Speed (%)", (RobotMap.SafetyMap.kMaxSpeedChange*100))
+                .withPosition(3,5)
+                .withWidget(BuiltInWidgets.kNumberSlider)
+                .withProperties(Map.of("min",0,"max",100))
+                .withSize(6,2);
+
+    }
     @Override
     public void periodic() {
-
+        robotFacingAngle = getRobotAngle();
+        RobotMap.SafetyMap.kMaxSpeedChange = robotSpeedWidget.getEntry().getDouble(RobotMap.SafetyMap.kMaxSpeedChange * 100.0) / 100.0; //Get Slider Value
+        Pose2d currentPose = drivetrain.getState().Pose;
+        if (currentPose != null) {  // Add this null check
+            fieldMap.updateRobotPose(currentPose);
+        } else {
+            // Handle the null pose.  Print a warning or take other action
+            System.err.println("SwerveSubsystem.periodic(): drivetrain pose is null!");
+        }
     }
 
     @Override
     public void simulationPeriodic() {
-        // Simulation-specific periodic tasks
+        robotFacingAngle = 0;
+        RobotMap.SafetyMap.kMaxSpeedChange = robotSpeedWidget.getEntry().getDouble(RobotMap.SafetyMap.kMaxSpeedChange * 100.0) / 100.0; //Get Slider Value
+        Pose2d currentPose = new Pose2d(0,1,new Rotation2d(40)); // This pose needs to be valid
+        fieldMap.updateRobotPose(currentPose);
     }
 
     public double applyDeadband(double value , double deadband) {
@@ -74,11 +104,28 @@ public class SwerveSubsystem extends SubsystemABS {
     public boolean isHealthy() {
         return true;
     }
+    public void driveInX(double x) {
+        drivetrain.setControl(drive.withVelocityX(x));
+    }
+
+    public void driveInY(double y) {
+        drivetrain.setControl(drive.withVelocityY(y));
+    }
+
+    public void rotate(double rate) {
+        drivetrain.setControl(drive.withRotationalRate(rate));
+    }
+
+    public void drive(double x , double y , double rate) {
+        drivetrain.setControl(drive.withVelocityX(x).withVelocityY(y).withRotationalRate(rate));
+    }
+
 
     @Override
     public void Failsafe() {
 
     }
+
 
     public void setBetaDefaultCommand() {
         drivetrain.setDefaultCommand(new FODC(driverController));
@@ -103,12 +150,19 @@ public class SwerveSubsystem extends SubsystemABS {
         tab.addBoolean(tabName + "/Y Button" , driverController.y());
         tab.addBoolean(tabName + "/Start Button" , driverController.start());
         tab.addBoolean(tabName + "/Back Button" , driverController.back());
+        tab.addBoolean(tabName + "/Left Stick Button" , driverController.leftStick());
+        tab.addBoolean(tabName + "/Right Stick Button" , driverController.rightStick());
+        tab.addBoolean(tabName + "/Left Trigger Button" , driverController.leftTrigger());
+        tab.addBoolean(tabName + "/Right Trigger Button" , driverController.rightTrigger());
+        tab.addNumber(tabName + "/Robot Speed (%)" , () -> RobotMap.SafetyMap.kMaxSpeedChange * 100.0);
     }
 
     public double snapToNearestLine(double angle , int i) {
         double snapAngle = 360.0 / RobotMap.SafetyMap.FODC.LineCount;
         return Math.round(angle / snapAngle) * snapAngle;
     }
+
+
 
     class GenericDrivetrain extends Command {
 

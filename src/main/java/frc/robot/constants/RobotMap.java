@@ -3,12 +3,13 @@ package frc.robot.constants;
 public class RobotMap {
 
     public static class SafetyMap {
-        public static final double kMaxSpeed = 1.0;
+        public static final double kMaxSpeed = 6.0;
         public static final double kMaxRotation = 1.0;
         public static final double kMaxAcceleration = 1.0;
         public static final double kMaxAngularAcceleration = 1.0;
         public static final double kJoystickDeadband = 0.1;
-        public static final double kMaxSpeedChange = 0.5;
+        public static  double kMaxSpeedChange = 1;
+        public static double kFollowerCommand = 6;
 
         public class FODC {
             public static final int LineCount = 72;
@@ -53,4 +54,21 @@ public class RobotMap {
     }
 
     // You can add more mappings for other subsystems like intake, shooter, etc.
+
+    public static class VisionMap {
+        public static final double ballRadius = 9; // cm ; 3.5 inches
+        public static final double targetHeight = 98.25; // cm ; 38.7 inches
+        public static final double cameraHeight = 40.64; // cm ; 16 inches
+        public static final double cameraAngle = 0; // degrees
+
+        public static class BackCamera {
+            public static final int CameraWidth = 320;
+            public static final int CameraHeight = 240;
+            public static final double HorizontalFOV = 68.5; // degrees
+            public static final double VerticalFOV = 53.4; // degrees
+            public static final String CameraName = "BackCamera";
+
+        }
+
+    }
 }
